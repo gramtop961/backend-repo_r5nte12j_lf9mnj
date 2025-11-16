@@ -1,48 +1,84 @@
-"""
-Database Schemas
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
+# Users: admin or staff
+class Users(BaseModel):
+    email: EmailStr
+    password_hash: str
+    name: str
+    role: str = Field(..., pattern="^(admin|staff)$")
+    is_active: bool = True
 
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
-"""
+# Master Barang
+class Barang(BaseModel):
+    kode_barang: str
+    nama_barang: str
+    satuan: str = Field(..., pattern="^(Gram|Kg|Ml|Pcs)$")
+    harga_beli_default: float = 0
+    kategori: str = Field(..., pattern="^(Bahan Baku|Barang Jadi)$")
 
-from pydantic import BaseModel, Field
-from typing import Optional
+# Master Supplier
+class Supplier(BaseModel):
+    kode_supplier: str
+    nama_supplier: str
+    alamat: Optional[str] = None
+    nomor_hp: Optional[str] = None
 
-# Example schemas (replace with your own):
+# Master Customer
+class Customer(BaseModel):
+    kode_customer: str
+    nama_customer: str
+    alamat: Optional[str] = None
+    nomor_hp: Optional[str] = None
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+# Pembelian Bahan Baku (header + items)
+class PembelianItem(BaseModel):
+    kode_barang: str
+    nama_barang: str
+    satuan: str
+    qty: float
+    harga_beli: float
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Pembelian(BaseModel):
+    nomor_faktur: str
+    tanggal: str
+    kode_supplier: str
+    supplier_name: Optional[str] = None
+    keterangan: Optional[str] = None
+    items: List[PembelianItem]
+    grand_total: float
 
-# Add your own schemas here:
-# --------------------------------------------------
+# Barang Masuk
+class BarangMasuk(BaseModel):
+    tanggal: str
+    kode_barang: str
+    nama_barang: str
+    satuan: str
+    qty: float
+    catatan: Optional[str] = None
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+# Barang Keluar
+class BarangKeluar(BaseModel):
+    tanggal: str
+    kode_barang: str
+    nama_barang: str
+    satuan: str
+    qty: float
+    catatan: Optional[str] = None
+
+# Penjualan
+class PenjualanItem(BaseModel):
+    kode_barang: str
+    nama_barang: str
+    satuan: str
+    qty: float
+    harga_jual: float
+
+class Penjualan(BaseModel):
+    nomor_penjualan: str
+    tanggal: str
+    kode_customer: str
+    customer_name: Optional[str] = None
+    keterangan: Optional[str] = None
+    items: List[PenjualanItem]
+    grand_total: float
